@@ -338,7 +338,7 @@ static void initializeAllSuits() {
 
 static int tcl_type_assert(TCLOBJ_PARAMS) TCLOBJ_DECL
 {
-  int base=(int)cd;
+  int base=(int)(intptr_t)cd;
   int value;
   if (objc!=2) {
     Tcl_WrongNumArgs(interp,1,objv,"<word>");
@@ -382,9 +382,9 @@ void initializeDealTypes(Tcl_Interp *interp) {
     Keyword_alias("West","west",0);
 
     Tcl_CreateObjCommand(interp,"assertHandname",
-                         tcl_type_assert,(ClientData)northId,NULL);
+                         tcl_type_assert,(ClientData)(intptr_t)northId,NULL);
     Tcl_CreateObjCommand(interp,"assertSuitname",
-                         tcl_type_assert,(ClientData)spadeId,NULL);
+                         tcl_type_assert,(ClientData)(intptr_t)spadeId,NULL);
 
     initializeAllSuits();
     initialized=1;

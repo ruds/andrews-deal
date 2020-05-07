@@ -13,8 +13,6 @@ include Make.mac-osx
 #include Make.ubuntu
 #include Make.debian
 
-CC=gcc
-
 
 # Since strdup is not implemented on some Ultrix systems
 # (and is not required by ANSI C) you might want to
@@ -138,7 +136,6 @@ newsite:
 	cp $(SRCZIP) site
 	$(MAKE) xzip
 	cp $(EXEZIP) site
-	
 
 $(BINDIR): $(BINKIT) sitedoc documentation
 	rm -rf $(BINDIR)

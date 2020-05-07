@@ -81,7 +81,7 @@ int tcl_other_hand(TCLOBJ_PARAMS) TCLOBJ_DECL
 {
     Tcl_Obj *result;
     int hand;
-    int rotation=(int)cd; /* 1 = LHO, 2 = partner, 3 = RHO */
+    int rotation=(int)(intptr_t)cd; /* 1 = LHO, 2 = partner, 3 = RHO */
 
     if (objc!=2) {
         Tcl_WrongNumArgs(interp,1,objv,"<handname>");
@@ -165,7 +165,7 @@ int tcl_count_suit (TCLOBJ_PARAMS) TCLOBJ_DECL
         hptr=holdings[hand];
     }
 
-    suit=(int)cd;
+    suit=(int)(intptr_t)cd;
 
     length=counttable[8191&hptr[suit]];
     
@@ -217,7 +217,7 @@ static int tcl_hand_cmd( TCLOBJ_PARAMS ) TCLOBJ_DECL
         HandID=-1,
         VoidFlagID=-1;
      
-    int hand=(int)cd;
+    int hand=(int)(intptr_t)cd;
     int suit;
     Tcl_Obj *voidObj=0;
     int argID;
@@ -520,15 +520,15 @@ int HandCmd_Init(Tcl_Interp *interp)
         /* Put suit name in client data as well as command name to allow
            use of "rename" by user */
         Tcl_CreateObjCommand(interp,suitname[suit], tcl_count_suit,
-                             (ClientData)suit, NULL);
+                             (ClientData)(intptr_t)suit, NULL);
     }
   
     for (hand=NORTH; hand<=WEST; hand++) {
         /* Put hand number in client data to allow use of "rename" by user */
-        Tcl_CreateObjCommand(interp,handname[hand],tcl_hand_cmd,(ClientData)hand,NULL);
+      Tcl_CreateObjCommand(interp,handname[hand],tcl_hand_cmd,(ClientData)(intptr_t)hand,NULL);
     }
 
-    Tcl_CreateObjCommand(interp,"hand",tcl_hand_cmd,(ClientData)NOSEAT,NULL);
+    Tcl_CreateObjCommand(interp,"hand",tcl_hand_cmd,(ClientData)(intptr_t)NOSEAT,NULL);
 
     Tcl_CreateObjCommand(interp,"whogets",tcl_deal_to_whom,NULL,NULL);
 

@@ -85,18 +85,18 @@ int Keyword_setId(const char *keyword,int id,int flags) {
     if (!isNew) {
         id=(int)Tcl_GetHashValue(entry);
     } else {
-        Tcl_SetHashValue(entry,id);
+      Tcl_SetHashValue(entry,(ClientData)(intptr_t)id);
     }
     entry=NULL;
  
     /* Only the first occurence of an id gets a backwards lookup */
-    entry=Tcl_CreateHashEntry(&backwardsLookup,(char *)id,&isNew);
+    entry=Tcl_CreateHashEntry(&backwardsLookup,(char *)(intptr_t)id,&isNew);
     if (entry==NULL) { return TCL_ERROR; }
 
     if (isNew || (flags&KEYWORD_SET_DEFAULT)) {
         char *oldKey=(char *)Tcl_GetHashValue(entry);
         if (oldKey!=NULL) { Tcl_Free(oldKey); }
-        Tcl_SetHashValue(entry,(ClientData)dupKey);
+        Tcl_SetHashValue(entry,(ClientData)(intptr_t)dupKey);
     }
     return id;
 }
@@ -110,7 +110,7 @@ Keyword_getId(char *key) {
 
 const char *Keyword_getKey(int id) {
     char *key;
-    Tcl_HashEntry *entry=Tcl_FindHashEntry(&backwardsLookup,(char *)id);
+    Tcl_HashEntry *entry=Tcl_FindHashEntry(&backwardsLookup,(char *)(intptr_t)id);
     if (entry==NULL) {
         return NULL;
     }
