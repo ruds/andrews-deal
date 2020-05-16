@@ -1,0 +1,91 @@
+# Set `histexpr` to an expression that should be evaluated per deal.
+# Prints a histogram of the values produced by `histexpr`.
+#
+# Ex: ./deal -e 'set histexpr {hcp north}' -i format/histogram 1000000
+
+set histogram [dict create]
+sdev hstats
+
+proc map {func lst} {
+    set res {}
+    foreach el $lst {lappend res [$func $el]}
+    set res
+}
+
+proc foldl {func init lst} {
+    foreach item $lst { set init [invoke $func $init $item] }
+    return $init
+}
+
+proc invoke {func args} { uplevel #0 $func $args }
+
+proc min {a b} { if {$a < $b} { return $a } else { return $b } }
+proc lmin {lst} { foldl min [lindex $lst 0] $lst }
+
+proc max {a b} { if {$a > $b} { return $a } else { return $b } }
+proc lmax {lst} { foldl max [lindex $lst 0] $lst }
+
+proc + {a b} { expr {$a + $b} }
+proc sum {lst} { foldl + 0 $lst }
+
+proc and {a b} { expr {$a && $b} }
+proc all {pred lst} { foldl and 1 [map $pred $lst] }
+
+proc isinteger {val} { string is integer -strict $val }
+proc isdouble {val} { string is double -strict $val }
+proc isnumeric {val} { expr {[isinteger $val] || [isdouble $val]} }
+
+proc slen {s} { string length $s }
+
+proc write_deal {} {
+    global histexpr
+    global histogram
+    set data [eval $histexpr]
+    dict incr histogram $data
+    if [isnumeric $data] {
+        hstats add $data
+    }
+}
+
+proc flush_deal {} {
+    global histogram
+    set keys [dict keys $histogram]
+    if [all isinteger $keys] {
+        set keys [lsort -integer $keys]
+        set numeric 1
+    } elseif [all isdouble $keys] {
+        set keys [lsort -double $keys]
+        set numeric 1
+    } else {
+        set keys [lsort $keys]
+        set numeric 0
+    }
+    set total [sum [dict values $histogram]]
+    set kwidth [max 5 [lmax [map slen keys]]]
+    set vwidth [max 5 [slen $total]]
+    set edge [string repeat - [expr {$vwidth + $kwidth + 40}]]
+    puts $edge
+    set divider [format "|%s|%s|----------|----------|----------|" \
+                     [string repeat - [expr $kwidth + 2]] \
+                     [string repeat - [expr $vwidth + 2]]]
+    puts [format "| %*s | %*s | %8s | %8s | %8s |" \
+              $kwidth "Value" $vwidth "Count" "Pct" "Cum Pct" "Pctile"]
+    puts $divider
+    set cum 0
+    foreach key $keys {
+        set ptile [expr {100.0 * ($total - $cum) / $total}]
+        set cnt [dict get $histogram $key]
+        set cum [expr $cum + $cnt]
+        set pct [expr {$cnt * 100.0 / $total}]
+        set cpct [expr {$cum * 100.0 / $total}]
+        puts [format "| %*s | %*s | %7.2f%% | %7.2f%% | %7.2f%% |" \
+                 $kwidth $key $vwidth $cnt $pct $cpct $ptile]
+    }
+    puts $divider
+    puts [format "| %*s | %*s | %7.2f%% | %7.2f%% | %7.2f%% |" \
+             $kwidth "" $vwidth $total 0 0 0]
+    puts $edge
+    if $numeric {
+        puts [format "Mean: %f    Std Dev: %f" [hstats average] [hstats sdev]]
+    }
+}
